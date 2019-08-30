@@ -1,5 +1,5 @@
 const defaultState = {
-  currentUser: {username: "Red Kangaroo"},
+  currentUser: null,
   roomUsers: [],
   currentRoom: {code: "function sayHello(){\n  console.log('Hey!')\n}"}
 }

@@ -9,18 +9,39 @@ import { ActionCableConsumer } from 'react-actioncable-provider'
 
 
 import { connect } from 'react-redux'
+import { setUser } from './redux/actions'
 
 class Room extends React.Component {
 
   state = {
     leftSide: {},
     rightSide: "",
-    user_id: 1,
+    username: "",
   }
 
   onChange = (newValue) => {
     this.setState({
       rightSide: newValue
+    })
+  }
+
+  signIn = () => {
+    fetch("http://localhost:4000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accepts": "application/json"
+      },
+      body: JSON.stringify({
+        username: this.state.username
+      })
+    })
+    .then(res => res.json())
+    .then(user => {
+      this.props.setUser(user)
+      this.setState({
+        username: "",
+      })
     })
   }
 
@@ -37,9 +58,9 @@ class Room extends React.Component {
     })
   }
 
-  changeUserId = (event) => {
+  inputUsername = (event) => {
     this.setState({
-      user_id: event.target.value
+      username: event.target.value
     })
   }
 
@@ -51,17 +72,14 @@ class Room extends React.Component {
         "Accepts": "application/json"
       },
       body: JSON.stringify({
-        user_id: this.state.user_id,
+        user_id: this.props.currentUser.id,
         room_id: this.props.match.params.id,
         code: this.state.rightSide
       })
-    })
-
-
-    
+    })   
   }
 
-  remove = (username) => {
+  remove = () => {
     fetch("http://localhost:4000/submissions/g", {
       method: "DELETE",
       headers: {
@@ -69,7 +87,7 @@ class Room extends React.Component {
         "Accepts": "application/json"
       },
       body: JSON.stringify({
-        user_id: this.state.user_id,
+        user_id: this.props.currentUser.id,
         room_id: this.props.match.params.id,
       })
     })
@@ -126,11 +144,19 @@ class Room extends React.Component {
             value={rightSide}
             editorProps={{ $blockScrolling: true }}
           />
-          <div>
-            <input onChange={this.changeUserId} value={this.state.user_id}/>
-           <button onClick={this.submit}>Submit</button>
-           <button onClick={this.remove}>Remove Submission</button>
-          </div>
+          {
+            this.props.currentUser ?
+            <div>
+              <button onClick={this.submit}>Submit</button>
+              <button onClick={this.remove}>Remove Submission</button>
+              <button onClick={() => this.setState({user: null})} >Sign out</button>
+            </div>
+            :
+            <div>
+              <input onChange={this.inputUsername} value={this.state.username}/>
+              <button onClick={this.signIn}>Sign In!</button>
+            </div>
+          }
         </div>
       </React.Fragment>
     )
@@ -138,7 +164,8 @@ class Room extends React.Component {
 }
 
 function msp(state){
+  console.log(state)
   return state
 }
 
-export default connect(msp)(Room)
+export default connect(msp, { setUser })(Room)
