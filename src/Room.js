@@ -7,9 +7,8 @@ import "brace/theme/github";
 
 import { ActionCableConsumer } from 'react-actioncable-provider'
 
-
+import { setRoom } from './redux/actions'
 import { connect } from 'react-redux'
-import { setUser } from './redux/actions'
 
 class Room extends React.Component {
 
@@ -25,29 +24,8 @@ class Room extends React.Component {
     })
   }
 
-  signIn = () => {
-    fetch("http://localhost:4000/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accepts": "application/json"
-      },
-      body: JSON.stringify({
-        username: this.state.username
-      })
-    })
-    .then(res => res.json())
-    .then(user => {
-      this.props.setUser(user)
-      this.setState({
-        username: "",
-      })
-    })
-  }
-
   componentDidMount(){
-    fetch(`http://localhost:4000/rooms/${this.props.match.params.id}`)
-    .then(res => res.json())
+    this.props.setRoom(this.props.match.params.id)
     .then(room => {
       const leftSide = {}
       room.submissions.forEach(sub => {
@@ -65,14 +43,14 @@ class Room extends React.Component {
   }
 
   submit = () => {
-    fetch("http://localhost:4000/submissions", {
+    fetch("http://localhost:4000/api/v1/submissions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accepts": "application/json"
+        "Accepts": "application/json",
+        "Authorization": localStorage.token
       },
       body: JSON.stringify({
-        user_id: this.props.currentUser.id,
         room_id: this.props.match.params.id,
         code: this.state.rightSide
       })
@@ -80,7 +58,7 @@ class Room extends React.Component {
   }
 
   remove = () => {
-    fetch("http://localhost:4000/submissions/g", {
+    fetch("http://localhost:4000/api/v1/submissions/g", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -105,6 +83,11 @@ class Room extends React.Component {
 
   render(){
     const { rightSide } = this.state
+
+    if (!this.props.currentRoom){
+      return <div>Loading...</div>
+    }
+    
     return (
       <React.Fragment>
         <ActionCableConsumer
@@ -125,6 +108,8 @@ class Room extends React.Component {
 
                 this.setState({leftSide: copy})
                 break;    
+              default:
+                return
             }        
           }}
         />
@@ -144,19 +129,10 @@ class Room extends React.Component {
             value={rightSide}
             editorProps={{ $blockScrolling: true }}
           />
-          {
-            this.props.currentUser ?
-            <div>
-              <button onClick={this.submit}>Submit</button>
-              <button onClick={this.remove}>Remove Submission</button>
-              <button onClick={() => this.setState({user: null})} >Sign out</button>
-            </div>
-            :
-            <div>
-              <input onChange={this.inputUsername} value={this.state.username}/>
-              <button onClick={this.signIn}>Sign In!</button>
-            </div>
-          }
+          <div>
+            <button onClick={this.submit}>Submit</button>
+            <button onClick={this.remove}>Remove Submission</button>
+          </div>
         </div>
       </React.Fragment>
     )
@@ -168,4 +144,4 @@ function msp(state){
   return state
 }
 
-export default connect(msp, { setUser })(Room)
+export default connect(msp, { setRoom })(Room)

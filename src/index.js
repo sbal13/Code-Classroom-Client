@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Route } from 'react-router-dom'
 
 import { createStore, applyMiddleware } from 'redux'
 import { Provider } from 'react-redux'
@@ -20,7 +20,7 @@ ReactDOM.render(
   <Provider store={store}>
     <ActionCableProvider url="ws://localhost:4000/cable">
       <BrowserRouter>
-        <App />
+        <Route path="/" component={App} />
       </BrowserRouter>
     </ActionCableProvider>
   </Provider>
