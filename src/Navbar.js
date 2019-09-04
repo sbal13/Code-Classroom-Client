@@ -6,12 +6,19 @@ import { connect } from 'react-redux'
 import { logout } from './redux/actions'
 
 function Navbar(props){
-  console.log(props)
+
+  const clickLogout = () =>{  
+    props.logout()
+    props.history.push("/login")
+  }
   return(
     <div>
       {
         props.currentUser ?
-          <button onClick={props.logout}>Log Out</button>
+          <Fragment>
+            <NavLink to="/dashboard">Home</NavLink>
+            <button onClick={clickLogout}>Log Out</button>
+          </Fragment>
         :
           <Fragment>
             <NavLink to="/login">Log In</NavLink>

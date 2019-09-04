@@ -3,11 +3,14 @@ import AceEditor from "react-ace";
 import brace from "brace";
 
 import "brace/mode/javascript";
+import "brace/mode/ruby";
 import "brace/theme/github";
+
+import { Redirect } from 'react-router-dom'
 
 import { ActionCableConsumer } from 'react-actioncable-provider'
 
-import { setRoom } from './redux/actions'
+import { setRoom, updateRoom } from './redux/actions'
 import { connect } from 'react-redux'
 
 class Room extends React.Component {
@@ -27,12 +30,17 @@ class Room extends React.Component {
   componentDidMount(){
     this.props.setRoom(this.props.match.params.id)
     .then(room => {
-      const leftSide = {}
-      room.submissions.forEach(sub => {
-        leftSide[sub.user.username] = sub.code
-      })
+      if(room){
+        const leftSide = {}
+        room.submissions.forEach(sub => {
+          leftSide[sub.user.username] = sub.code
+        })
 
-      this.setState({ leftSide })
+        this.setState({ leftSide })
+      } else {
+        this.props.history.push("/dashboard")
+      }
+      
     })
   }
 
@@ -43,18 +51,33 @@ class Room extends React.Component {
   }
 
   submit = () => {
-    fetch("http://localhost:4000/api/v1/submissions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accepts": "application/json",
-        "Authorization": localStorage.token
-      },
-      body: JSON.stringify({
-        room_id: this.props.match.params.id,
-        code: this.state.rightSide
-      })
-    })   
+    if (this.props.currentUser.admin){
+      fetch(`http://localhost:4000/api/v1/rooms/${this.props.match.params.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Accepts": "application/json",
+          "Authorization": localStorage.token
+        },
+        body: JSON.stringify({
+          code: this.state.rightSide
+        })
+      })   
+    } else {
+      fetch("http://localhost:4000/api/v1/submissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accepts": "application/json",
+          "Authorization": localStorage.token
+        },
+        body: JSON.stringify({
+          room_id: this.props.match.params.id,
+          code: this.state.rightSide
+        })
+      })   
+
+    }
   }
 
   remove = () => {
@@ -62,7 +85,8 @@ class Room extends React.Component {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "Accepts": "application/json"
+        "Accepts": "application/json",
+        "Authorization": localStorage.token
       },
       body: JSON.stringify({
         user_id: this.props.currentUser.id,
@@ -82,12 +106,18 @@ class Room extends React.Component {
   }
 
   render(){
-    const { rightSide } = this.state
 
-    if (!this.props.currentRoom){
+    if (!localStorage.token){
+      return <Redirect to="/login"/>
+    }
+
+    if (!this.props.currentRoom || !this.props.currentUser){
       return <div>Loading...</div>
     }
-    
+
+    console.log(this.props)
+
+    const { rightSide } = this.state
     return (
       <React.Fragment>
         <ActionCableConsumer
@@ -108,6 +138,8 @@ class Room extends React.Component {
 
                 this.setState({leftSide: copy})
                 break;    
+              case "UPDATE_ROOM":
+                this.props.updateRoom(data.payload)
               default:
                 return
             }        
@@ -116,14 +148,14 @@ class Room extends React.Component {
         <div className="room">
           
           <AceEditor
-            mode="javascript"
+            mode={this.props.currentRoom.language.toLowerCase()}
             theme="github"
             value={this.generateLeftSide()}
             readOnly={true}
             editorProps={{ $blockScrolling: true }}
           />
           <AceEditor
-            mode="javascript"
+            mode={this.props.currentRoom.language.toLowerCase()}
             theme="github"
             onChange={this.onChange}
             value={rightSide}
@@ -140,8 +172,7 @@ class Room extends React.Component {
 }
 
 function msp(state){
-  console.log(state)
   return state
 }
 
-export default connect(msp, { setRoom })(Room)
+export default connect(msp, { setRoom, updateRoom })(Room)

@@ -19,7 +19,6 @@ function autoLogin(){
       if (response.errors){
         alert(response.errors)
       } else {
-        console.log(response)
         dispatch(setUser(response))
       }
     })
@@ -56,7 +55,7 @@ function login(username, password, history){
         console.log(response)
         localStorage.token = response.token
         dispatch(setUser(response.user))
-        history.push('/rooms/1')
+        history.push('/dashboard')
       }
     })
   }
@@ -79,10 +78,71 @@ function signup(username, password, history){
       } else {
         localStorage.token = response.token
         dispatch(setUser(response.user))
-        history.push('/rooms/1')
+        history.push('/dashboard')
       }
     })
   }
+}
+
+function joinCohort(cohortId){
+  return function(dispatch){
+    return fetch(`http://localhost:4000/api/v1/join_cohort/${cohortId}`, {
+      method: "PATCH",
+      headers: {"Authorization": localStorage.token}
+    })
+    .then(res => res.json())
+    .then(response => {
+      if(response.errors){
+        alert(response.errors)
+      } else {
+        dispatch({type: "JOIN_COHORT", payload: response})
+        return response
+      }
+    })
+  }
+}
+
+function createCohort(name){
+  return function(dispatch){
+    return fetch(`http://localhost:4000/api/v1/cohorts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accepts": "application/json",
+        "Authorization": localStorage.token
+      },
+      body: JSON.stringify({ name })
+    })
+    .then(res => res.json())
+    .then(response => {
+      if(response.errors){
+        alert(response.errors)
+      } else {
+        dispatch({type: "JOIN_COHORT", payload: response})
+        return response
+      }
+    })
+  }
+}
+
+function createRoom(name, cohort_id, language){
+  return function(dispatch){
+    return fetch(`http://localhost:4000/api/v1/rooms`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accepts": "application/json",
+        "Authorization": localStorage.token
+      },
+      body: JSON.stringify({ name, cohort_id, language })
+    })
+    .then(res => res.json())
+    
+  }
+}
+
+function updateRoom(room){
+  return {type: "UPDATE_ROOM", payload: room}
 }
 
 export {
@@ -91,5 +151,9 @@ export {
   signup,
   logout,
   autoLogin,
-  setRoom
+  setRoom,
+  joinCohort,
+  updateRoom,
+  createCohort,
+  createRoom
 }

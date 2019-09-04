@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import Room from './Room'
 import Navbar from './Navbar'
+import Dashboard from './Dashboard'
 import Signup from './Signup'
 import Login from './Login'
 import { Switch, Route } from 'react-router-dom'
@@ -24,6 +25,7 @@ class App extends React.Component {
           <Route path="/signup" component={Signup}/>
           <Route path="/login" component={Login}/>
           <Route path="/rooms/:id" component={Room}/>
+          <Route path="/dashboard" component={Dashboard}/>
         </Switch>
       </div>
     );

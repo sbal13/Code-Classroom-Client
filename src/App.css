@@ -1,3 +1,7 @@
 .room {
   display: flex;
 }
+
+.dashboard {
+  display: flex;
+}

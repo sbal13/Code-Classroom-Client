@@ -10,6 +10,10 @@ function reducer(state=defaultState, action){
       return {...state, currentUser: action.payload}    
     case "SET_ROOM":
       return {...state, currentRoom: action.payload}
+    case "JOIN_COHORT":
+      return {...state, currentUser: {...state.currentUser, cohorts: [...state.currentUser.cohorts, action.payload]}}
+    case "UPDATE_ROOM":
+      return {...state, currentRoom: action.payload}
     default:
       return state
   }
